@@ -1,0 +1,37 @@
+<?xml version="1.0" encoding="utf-8"?>
+<manifest package="dt.bluebox"
+          xmlns:android="http://schemas.android.com/apk/res/android">
+
+    <uses-permission android:name="android.permission.INTERNET"/> <!-- receives plain no protocol ascii text, not http -->
+    <uses-permission android:name="android.permission.WRITE_EXTERNAL_STORAGE"/> <!--where else are you gonna store logs?-->
+
+    <!-- nothing personal in settings for this app. ok to store on someone else's server -->
+    <application
+        android:allowBackup="true"
+        android:icon="@mipmap/ic_launcher"
+        android:label="@string/app_name"
+        android:supportsRtl="true"
+        android:theme="@style/AppTheme">
+
+        <activity
+            android:name=".screens.MainActivity">
+            <intent-filter>
+                <action android:name="android.intent.action.MAIN"/>
+
+                <category android:name="android.intent.category.LAUNCHER"/>
+            </intent-filter>
+        </activity>
+
+        <service
+            android:name=".background.PortListener"
+            android:exported="false"
+            android:process="@string/port_listener_service"
+            />
+
+        <activity
+            android:name=".screens.DTSettings"
+            android:label="@string/settings_title"
+            />
+    </application>
+
+</manifest>

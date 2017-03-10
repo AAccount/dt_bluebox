@@ -1,0 +1,27 @@
+<?xml version="1.0" encoding="utf-8"?>
+<PreferenceScreen
+    xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:tools="http://schemas.android.com/tools"
+    android:layout_width="match_parent"
+    android:layout_height="match_parent"
+    tools:context="dt.bluebox.screens.DTSettings"
+    >
+
+    <EditTextPreference
+        android:key="port"
+        android:title="@string/settings_port_title"
+        android:summary="@string/settings_port_summary"
+        android:dialogTitle="@string/settings_port_title"
+        android:inputType="number"
+        android:maxLength="5"
+        />
+
+    <EditTextPreference
+        android:key="rotate_time"
+        android:title="@string/settings_rotate_title"
+        android:summary="@string/settings_rotate_summary"
+        android:dialogTitle="@string/settings_rotate_title"
+        android:inputType="number"
+        android:maxLength="3"
+        />
+</PreferenceScreen>
