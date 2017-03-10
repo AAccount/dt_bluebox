@@ -123,11 +123,14 @@ public class MainActivity extends AppCompatActivity
 		if(success)
 		{
 			File file[] = folder.listFiles();
-			int max = Math.min(MAXVIEW, file.length);
-
-			for(int i=0; i<max; i++)
+			if(file != null) //when there are no previous logs
 			{
-				menu.add(file[i].getName());
+				int max = Math.min(MAXVIEW, file.length);
+
+				for (int i = 0; i < max; i++)
+				{
+					menu.add(file[i].getName());
+				}
 			}
 		}
 		else
