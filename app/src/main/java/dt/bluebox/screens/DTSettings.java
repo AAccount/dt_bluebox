@@ -10,6 +10,7 @@ import android.support.v7.app.AppCompatActivity;
 import dt.bluebox.Const;
 import dt.bluebox.R;
 import dt.bluebox.Utils;
+import dt.bluebox.Vars;
 
 /**
  * Created by Daniel on 2/26/17.
@@ -57,6 +58,7 @@ public class DTSettings extends AppCompatActivity
 					int newPort = Integer.valueOf((String) newValue);
 					if (newPort > 1 && newPort < 65536)
 					{
+						Vars.port = newPort;
 						return true;
 					}
 					else
@@ -69,6 +71,10 @@ public class DTSettings extends AppCompatActivity
 				{
 					return false;
 				}
+			}
+			else
+			{
+				Vars.rotatePeriod = Integer.valueOf((String)newValue);
 			}
 			return true;
 		}
