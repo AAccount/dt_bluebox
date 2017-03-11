@@ -32,6 +32,8 @@ public class PortListener extends IntentService
 	@Override
 	protected void onHandleIntent(Intent intent)
 	{
+		Log.d(tag, "Port listener started");
+		Vars.isPortListening = true;
 
 		//setup the log file for the first time
 		Utils.createNewLog();
@@ -76,5 +78,13 @@ public class PortListener extends IntentService
 		{
 			Log.e(tag, i.getMessage());
 		}
+	}
+
+	@Override
+	public void onDestroy()
+	{
+		Log.d(tag, "Port Listener is stopping");
+		Vars.isPortListening = false;
+		super.onDestroy();
 	}
 }

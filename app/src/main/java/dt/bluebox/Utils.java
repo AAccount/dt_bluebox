@@ -34,26 +34,13 @@ public class Utils
 		}
 	}
 
-	public static boolean isPortListenerRunning(Context context)
-	{
-		ActivityManager activityManager = (ActivityManager)context.getSystemService(context.ACTIVITY_SERVICE);
-		for(ActivityManager.RunningServiceInfo service : activityManager.getRunningServices(Integer.MAX_VALUE))
-		{
-			if(PortListener.class.getName().equals(service.service.getClassName()))
-			{
-				return true;
-			}
-		}
-
-		return false;
-	}
-
 	//creates a new log file with the timestamp as the name
 	public static void createNewLog()
 	{
 		synchronized (Vars.currentLogLock)
 		{
 			String logName = Environment.getExternalStorageDirectory() + "/" + Const.FOLDER_NAME + "/log_" + Vars.simpleDateFormat.format(new Date());
+			Log.d(tag, "Creating: " + logName);
 			Vars.currentLog = new File(logName);
 			try
 			{

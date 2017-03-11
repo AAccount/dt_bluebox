@@ -22,16 +22,22 @@
             </intent-filter>
         </activity>
 
+        <receiver android:name=".background.LogRotateManager">
+            <intent-filter>
+                <action android:name="dt.bluebox.action_rotate"/>
+            </intent-filter>
+        </receiver>
+
         <service
             android:name=".background.PortListener"
             android:exported="false"
-            android:process="@string/port_listener_service"
             />
 
         <activity
             android:name=".screens.DTSettings"
             android:label="@string/settings_title"
             />
+
     </application>
 
 </manifest>

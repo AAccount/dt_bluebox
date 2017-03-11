@@ -14,6 +14,7 @@ import android.support.v4.content.ContextCompat;
 import android.support.v7.app.AlertDialog;
 import android.support.v7.app.AppCompatActivity;
 import android.os.Bundle;
+import android.util.Log;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.TextView;
@@ -22,6 +23,8 @@ import android.os.Process;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.Collection;
+import java.util.Collections;
 import java.util.Iterator;
 
 import dt.bluebox.Const;
@@ -69,7 +72,6 @@ public class MainActivity extends AppCompatActivity
 		if(Vars.port == 0 || Vars.rotatePeriod == 0)
 		{
 			Utils.showOk(this, getString(R.string.err_settings_incomplete));
-			invalidateOptionsMenu(); //trigger the disable of start and stop if the settings are incomplete
 		}
 
 		//make sure there are storage permissions. otherwise nowhere to store the logs
@@ -77,7 +79,6 @@ public class MainActivity extends AppCompatActivity
 		{
 			//change the action bar
 			Vars.storagePerm = false;
-			invalidateOptionsMenu();
 
 			android.app.AlertDialog.Builder mkdialog = new android.app.AlertDialog.Builder(this);
 			mkdialog.setMessage(getString(R.string.main_activity_storage_perm))
@@ -99,7 +100,40 @@ public class MainActivity extends AppCompatActivity
 			//for that weird case where you say no to the popup and then realize you needed to say yes so you
 			//	do it by hand in the android settings --> app --> permissions
 			Vars.storagePerm = true;
-			invalidateOptionsMenu();
+		}
+
+		invalidateOptionsMenu();
+	}
+
+	@Override
+	protected void onSaveInstanceState(Bundle save)
+	{
+		save.putInt(Const.PREF_PORT, Vars.port);
+		save.putInt(Const.PREF_ROTATE, Vars.rotatePeriod);
+		save.putBoolean(Const.SAVE_ISRUNNING, Vars.isPortListening);
+		save.putBoolean(Const.SAVE_PERM, Vars.storagePerm);
+
+		if(Vars.currentLog != null)
+		{
+			save.putString(Const.SAVE_LOGNAME, Vars.currentLog.getAbsolutePath());
+		}
+	}
+
+	@Override
+	protected void  onRestoreInstanceState(Bundle restore)
+	{
+		Vars.port = restore.getInt(Const.PREF_PORT);
+		Vars.rotatePeriod = restore.getInt(Const.PREF_ROTATE);
+		Vars.isPortListening = restore.getBoolean(Const.SAVE_ISRUNNING);
+		Vars.storagePerm = restore.getBoolean(Const.SAVE_PERM);
+		String oldLog = restore.getString(Const.SAVE_LOGNAME);
+
+		if(Vars.currentLog == null && oldLog != null);
+		{
+			synchronized (Vars.currentLogLock)
+			{
+				Vars.currentLog = new File(restore.getString(Const.SAVE_LOGNAME));
+			}
 		}
 	}
 
@@ -146,22 +180,22 @@ public class MainActivity extends AppCompatActivity
 	{
 		if(Vars.rotatePeriod == 0 || Vars.port == 0 || !Vars.storagePerm)
 		{
-			menu.findItem(R.id.menu_home_start).setEnabled(false);
-			menu.findItem(R.id.menu_home_stop).setEnabled(false);
+			menu.findItem(R.id.menu_home_start).setVisible(false);
+			menu.findItem(R.id.menu_home_stop).setVisible(false);
 			super.onPrepareOptionsMenu(menu);
 			return true;
 		}
 
 		//show start and stop appropriately
-		if(Utils.isPortListenerRunning(getApplicationContext()))
+		if(Vars.isPortListening)
 		{
-			menu.findItem(R.id.menu_home_start).setEnabled(false);
-			menu.findItem(R.id.menu_home_stop).setEnabled(true);
+			menu.findItem(R.id.menu_home_start).setVisible(false);
+			menu.findItem(R.id.menu_home_stop).setVisible(true);
 		}
 		else
 		{
-			menu.findItem(R.id.menu_home_stop).setEnabled(false);
-			menu.findItem(R.id.menu_home_start).setEnabled(true);
+			menu.findItem(R.id.menu_home_stop).setVisible(false);
+			menu.findItem(R.id.menu_home_start).setVisible(true);
 		}
 		super.onPrepareOptionsMenu(menu);
 		return true;
@@ -174,9 +208,9 @@ public class MainActivity extends AppCompatActivity
 		switch(item.getItemId())
 		{
 			case R.id.menu_home_start:
-				if(!Utils.isPortListenerRunning(getApplicationContext())) //make sure only 1 instance of port listener is running
+				if(!Vars.isPortListening) //make sure only 1 instance of port listener is running
 				{
-					startService(new Intent(getApplicationContext(), PortListener.class));
+					startService(new Intent(this, PortListener.class));
 
 					//setup the log rotation
 					int rotateInMillis = Vars.rotatePeriod *60*60*1000;
@@ -192,19 +226,8 @@ public class MainActivity extends AppCompatActivity
 				AlarmManager manager = (AlarmManager)getSystemService(ALARM_SERVICE);
 				manager.cancel(Vars.pendingRotate);
 
-				//find the port listener thread and kill it
-				String portListenerName = Const.self + getString(R.string.port_listener_service);
-				ActivityManager activityManager = (ActivityManager) getSystemService(ACTIVITY_SERVICE);
-				Iterator<RunningAppProcessInfo> procsIterator = activityManager.getRunningAppProcesses().iterator();
-				while(procsIterator.hasNext())
-				{
-					RunningAppProcessInfo proc = procsIterator.next();
-					if(proc.processName.equals(portListenerName))
-					{
-						Process.killProcess(proc.pid);
-						break;
-					}
-				}
+				//stop port listener
+				stopService(new Intent(this, PortListener.class));
 
 				invalidateOptionsMenu(); //enable start
 				return true;
@@ -212,7 +235,10 @@ public class MainActivity extends AppCompatActivity
 				startActivity(new Intent(this, DTSettings.class));
 				return true;
 			case R.id.menu_home_refresh:
-				currentLogName.setText(Vars.currentLog.getName());
+				if(Vars.currentLog != null)
+				{
+					currentLogName.setText(Vars.currentLog.getName());
+				}
 				return true;
 		}
 
