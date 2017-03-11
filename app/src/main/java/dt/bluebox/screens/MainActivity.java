@@ -23,8 +23,10 @@ import android.os.Process;
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.Iterator;
 
 import dt.bluebox.Const;
@@ -59,7 +61,7 @@ public class MainActivity extends AppCompatActivity
 			Vars.rotatePeriod = 0;
 		}
 
-		//setup the intent and pending intent. you'll need it sooner or late
+		//setup the intent and pending intent for log rotation. you'll need it sooner or late
 		Utils.initRotatePending(getApplicationContext());
 	}
 
@@ -147,7 +149,7 @@ public class MainActivity extends AppCompatActivity
 		File folder = new File(path);
 
 		//first check if the folder for storing logs exists
-		boolean success = true; //default true in case it aready exists
+		boolean success = true; //default true in case it already exists
 		if(!folder.exists())
 		{
 			success = folder.mkdir();
@@ -156,14 +158,24 @@ public class MainActivity extends AppCompatActivity
 		//populate the overflow menu with the 5 most recent logs for viewing
 		if(success)
 		{
-			File file[] = folder.listFiles();
-			if(file != null) //when there are no previous logs
+			File savedLogs[] = folder.listFiles();
+			if(savedLogs != null) //when there are no previous logs
 			{
-				int max = Math.min(MAXVIEW, file.length);
+				//sort the files by newest to oldest
+				//https://stackoverflow.com/questions/203030/best-way-to-list-files-in-java-sorted-by-date-modified
+				Arrays.sort(savedLogs, new Comparator<File>()
+				{
+					@Override
+					public int compare(File f1, File f2)
+					{
+						return (int)(f2.lastModified() - f1.lastModified());
+					}
+				});
 
+				int max = Math.min(MAXVIEW, savedLogs.length);
 				for (int i = 0; i < max; i++)
 				{
-					menu.add(file[i].getName());
+					menu.add(savedLogs[i].getName());
 				}
 			}
 		}
@@ -235,23 +247,33 @@ public class MainActivity extends AppCompatActivity
 				startActivity(new Intent(this, DTSettings.class));
 				return true;
 			case R.id.menu_home_refresh:
-				if(Vars.currentLog != null)
+				synchronized (Vars.currentLogLock)
 				{
-					currentLogName.setText(Vars.currentLog.getName());
+					if (Vars.currentLog != null)
+					{
+						currentLogName.setText(Vars.currentLog.getName());
+						dumpLog(Vars.currentLog.getAbsolutePath());
+					}
 				}
 				return true;
 		}
 
 		//for one of the existing log files, dump its contents to the screen
 		String logPath = Environment.getExternalStorageDirectory().toString() + "/" + Const.FOLDER_NAME + "/" + item.getTitle();
+		dumpLog(logPath);
+		return true;
+	}
+
+	private void dumpLog(String path)
+	{
 		try
 		{
-			File log = new File(logPath);
-			if (log.exists())
+			File log = new File(path);
+			if (log.exists()) //figure out if the log exists
 			{
 				String dump = "", line;
 				BufferedReader logReader = new BufferedReader(new FileReader(log));
-				while((line = logReader.readLine()) != null)
+				while((line = logReader.readLine()) != null) //read it line by line
 				{
 					dump = dump + line + "\n";
 				}
@@ -262,7 +284,6 @@ public class MainActivity extends AppCompatActivity
 		{
 			logview.setText(e.getMessage());
 		}
-		return true;
 	}
 
 	@Override
