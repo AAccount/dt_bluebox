@@ -22,7 +22,7 @@
     <string name="settings_title">Settings</string>
     <string name="settings_port_title">Port</string>
     <string name="settings_port_summary">TCP port to listen for incoming ascii log messages</string>
-    <string name="settings_rotate_title">Rotatation Period</string>
+    <string name="settings_rotate_title">Rotation Period</string>
     <string name="settings_rotate_summary">How often, in hours, to rotate (change) the file being used for logging.</string>
 
     <string name="ok">OK</string>
